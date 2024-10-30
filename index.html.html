@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracker</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 16px;
+            text-align: left;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .status-dropdown {
+            width: 100%;
+            padding: 8px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        .status-pending { color: red; }
+        .status-completed { color: green; }
+        .status-no-stock { color: grey; }
+        .status-model-mismatch { color: blue; }
+        .status-outstanding { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Order Tracker</h2>
+
+<table id="trackerTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Channel Name</th>
+            <th>PO Number</th>
+            <th>PO Date</th>
+            <th>Category</th>
+            <th>Model Name</th>
+            <th>Quantity</th>
+            <th>Status</th>
+            <th>Remarks</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td contenteditable="true"></td>
+            <td><input type="date"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td><input type="date"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td contenteditable="true"></td>
+            <td>
+                <select class="status-dropdown" onchange="updateStatusColor(this)">
+                    <option value="pending" class="status-pending">Pending</option>
+                    <option value="completed" class="status-completed">Completed</option>
+                    <option value="no-stock" class="status-no-stock">No Stock</option>
+                    <option value="model-mismatch" class="status-model-mismatch">Model Mismatch</option>
+                    <option value="outstanding" class="status-outstanding">Outstanding</option>
+                </select>
+            </td>
+            <td contenteditable="true"></td>
+        </tr>
+        <!-- Additional rows can be added here -->
+    </tbody>
+</table>
+
+<button onclick="addRow()">Add Row</button>
+<button onclick="exportTableToExcel()">Download as Excel</button>
+
+<script>
+    function addRow() {
+        const table = document.getElementById("trackerTable").getElementsByTagName('tbody')[0];
+        const newRow = table.insertRow();
+
+        for (let i = 0; i < 10; i++) {
+            const newCell = newRow.insertCell(i);
+            if (i === 1 || i === 4) {
+                // Date picker for "Date" and "PO Date"
+                newCell.innerHTML = '<input type="date">';
+            } else if (i === 8) {
+                // Status dropdown
+                newCell.innerHTML = `<select class="status-dropdown" onchange="updateStatusColor(this)">
+                    <option value="pending" class="status-pending">Pending</option>
+                    <option value="completed" class="status-completed">Completed</option>
+                    <option value="no-stock" class="status-no-stock">No Stock</option>
+                    <option value="model-mismatch" class="status-model-mismatch">Model Mismatch</option>
+                    <option value="outstanding" class="status-outstanding">Outstanding</option>
+                </select>`;
+            } else {
+                // Editable cells
+                newCell.contentEditable = "true";
+            }
+        }
+    }
+
+    function updateStatusColor(dropdown) {
+        dropdown.className = `status-dropdown status-${dropdown.value}`;
+    }
+
+    function exportTableToExcel() {
+        let table = document.getElementById("trackerTable");
+        let rows = Array.from(table.rows);
+        let csvContent = "";
+
+        rows.forEach((row) => {
+            let cols = Array.from(row.cells);
+            let rowData = cols.map(cell => cell.querySelector("input") ? cell.querySelector("input").value : cell.innerText.trim());
+            csvContent += rowData.join(",") + "\n";
+        });
+
+        const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "tracker.csv";
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+
+</body>
+</html>
