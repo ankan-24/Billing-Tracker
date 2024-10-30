@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracker</title>
+    <title>Order Tracker</title>
     <style>
         table {
             width: 100%;
@@ -72,11 +72,12 @@
             </td>
             <td contenteditable="true"></td>
         </tr>
-        <!-- Additional rows can be added here -->
     </tbody>
 </table>
 
 <button onclick="addRow()">Add Row</button>
+<button onclick="saveEntries()">Save Entry</button>
+<button onclick="loadEntries()">Load Entries</button>
 <button onclick="exportTableToExcel()">Download as Excel</button>
 
 <script>
@@ -87,10 +88,8 @@
         for (let i = 0; i < 10; i++) {
             const newCell = newRow.insertCell(i);
             if (i === 1 || i === 4) {
-                // Date picker for "Date" and "PO Date"
                 newCell.innerHTML = '<input type="date">';
             } else if (i === 8) {
-                // Status dropdown
                 newCell.innerHTML = `<select class="status-dropdown" onchange="updateStatusColor(this)">
                     <option value="pending" class="status-pending">Pending</option>
                     <option value="completed" class="status-completed">Completed</option>
@@ -99,7 +98,6 @@
                     <option value="outstanding" class="status-outstanding">Outstanding</option>
                 </select>`;
             } else {
-                // Editable cells
                 newCell.contentEditable = "true";
             }
         }
@@ -107,6 +105,46 @@
 
     function updateStatusColor(dropdown) {
         dropdown.className = `status-dropdown status-${dropdown.value}`;
+    }
+
+    function saveEntries() {
+        const table = document.getElementById("trackerTable");
+        const rows = Array.from(table.rows).slice(1); // Skip header row
+        const data = rows.map(row => Array.from(row.cells).map(cell => 
+            cell.querySelector("input") ? cell.querySelector("input").value : cell.innerText.trim()
+        ));
+        localStorage.setItem("trackerData", JSON.stringify(data));
+        alert("Entries saved successfully!");
+    }
+
+    function loadEntries() {
+        const data = JSON.parse(localStorage.getItem("trackerData"));
+        if (!data) return;
+        
+        const tbody = document.getElementById("trackerTable").getElementsByTagName("tbody")[0];
+        tbody.innerHTML = ""; // Clear existing rows
+
+        data.forEach(rowData => {
+            const newRow = tbody.insertRow();
+            rowData.forEach((cellData, i) => {
+                const newCell = newRow.insertCell(i);
+                if (i === 1 || i === 4) {
+                    newCell.innerHTML = `<input type="date" value="${cellData}">`;
+                } else if (i === 8) {
+                    newCell.innerHTML = `<select class="status-dropdown" onchange="updateStatusColor(this)">
+                        <option value="pending" class="status-pending" ${cellData === 'Pending' ? 'selected' : ''}>Pending</option>
+                        <option value="completed" class="status-completed" ${cellData === 'Completed' ? 'selected' : ''}>Completed</option>
+                        <option value="no-stock" class="status-no-stock" ${cellData === 'No Stock' ? 'selected' : ''}>No Stock</option>
+                        <option value="model-mismatch" class="status-model-mismatch" ${cellData === 'Model Mismatch' ? 'selected' : ''}>Model Mismatch</option>
+                        <option value="outstanding" class="status-outstanding" ${cellData === 'Outstanding' ? 'selected' : ''}>Outstanding</option>
+                    </select>`;
+                    updateStatusColor(newCell.querySelector("select"));
+                } else {
+                    newCell.contentEditable = "true";
+                    newCell.innerText = cellData;
+                }
+            });
+        });
     }
 
     function exportTableToExcel() {
